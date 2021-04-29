@@ -12,8 +12,8 @@
                 </span>
                 <el-dropdown-menu slot="dropdown">
                     <el-dropdown-item command = "/user">个人中心</el-dropdown-item>
-                    <el-dropdown-item>设置</el-dropdown-item>
-                    <el-dropdown-item>注销登陆</el-dropdown-item>
+                    <el-dropdown-item command = "" @click.native="taggleModal">修改密码</el-dropdown-item>
+                    <el-dropdown-item command = "">注销登陆</el-dropdown-item>
                 </el-dropdown-menu>
                 </el-dropdown>
             </el-header>
@@ -63,46 +63,150 @@
                 <el-main>
                     <router-view/>
                 </el-main>
-
             </el-container>
         </el-container>
+      
+       <el-dialog title="修改密码" 
+        :visible.sync="showChangePwdModal"
+        :append-to-body="true"
+        :close-on-click-modal = "false"
+         customClass="customWidth"
+         width="40%"
+        >
+            <el-form :model="changePwdForm" :rules="changePwdRules" ref="changePwdForm" v-loading="loading">
+                <el-form-item label="旧密码" :label-width="formLabelWidth" prop="oldPassword">
+                    <el-input v-model="changePwdForm.oldPassword" autocomplete="off" show-password class="pwdInput"></el-input>
+                </el-form-item>
+                
+                <el-form-item label="新密码" :label-width="formLabelWidth" prop="newPassword">
+                    <el-input v-model="changePwdForm.newPassword" autocomplete="off" show-password class="pwdInput"></el-input>
+                </el-form-item>
+
+                <el-form-item label="确认密码" :label-width="formLabelWidth" prop="confirnPassword">
+                    <el-input v-model="changePwdForm.confirnPassword" autocomplete="off" show-password class="pwdInput"></el-input>
+                </el-form-item>
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="closeDialog">取 消</el-button>
+                <el-button type="primary" @click="changePasswordEvent">确 定</el-button>
+            </div>
+        </el-dialog>
+
     </div>
 </template>
 <script>    
+
     export default {
         name: "Home",
-        methods: {
+   
+           methods: {
+            //菜单处理
             menuClick(url) {
                 if (url !== this.curentPageUrl) {
                     this.curentPageUrl = url;
                     this.$router.push(url);
                 }
             },
+            //下拉菜单处理
             dropdownEvent(command) {
-                 if (command !== this.curentPageUrl) {
+                 if (command !== this.curentPageUrl && command != "") {
                     this.curentPageUrl = command;
                     this.$router.push(command);
                 }
+            },
+            //打开修改密码模态框
+            taggleModal() {
+                this.showChangePwdModal = !this.showChangePwdModal;
+            },
+            closeDialog() {
+                if (!this.loading) {
+                 this.showChangePwdModal = !this.showChangePwdModal;
+                }
+            },
+            //修改密码
+            changePasswordEvent() {
+                if (this.loading) {
+                    return
+                }
+                this.$refs.changePwdForm.validate((valid) => {
+                    if (valid) {
+                       this.loading = true
+                       this.postRequest('/change_password', this.changePwdForm).then(resp=> {
+                           if (resp.code == 200) {
+                                this.showChangePwdModal = false;
+                                window.sessionStorage.removeItem('token');
+                                window.sessionStorage.removeItem('user');
+                                this.$alert(resp.message, 'E_SHARE通知', {
+                                    confirmButtonText: '确定',
+                                    callback: action => {
+                                        this.$router.replace('/login');
+                                    }
+                                });
+                           } 
+                           this.loading = false
+                       })
+                    }
+                })
             }
            
         },
         mounted: function(){
             this.$router.replace(this.curentPageUrl);
             this.getRequest('/get_types').then(resp =>{
-                if (resp) {
-                    console.log(window.sessionStorage.getItem('user'))
+                if (resp.code == 200) {
                     this.typeList = resp.object;
                     console.log(this.typeList);
                 }
             })
-
-
         },
+
         data() {
+            var validatePass = (rule, value, callback) => {
+                if (value == '') {
+                    callback(new Error('请输入密码'));
+                } else  {
+                    if (value.length < 8 || value.length > 16) {
+                        callback(new Error('请控制密码长度在8到16位之间'));
+                    } 
+                    callback();
+                }
+            };
+
+            var validateConfirmPass = (rule, value, callback) => {
+                if (value === '') {
+                    callback(new Error('请输入确认密码'));
+                } else {
+                    if (value !== this.changePwdForm.newPassword) {
+                        callback(new Error('两次密码不一致，请重新输入'));
+                    }
+                    callback();
+                }
+            };
+            
             return{
-                curentPageUrl:'/fileList',
+                curentPageUrl:'/user',
                 user: JSON.parse(window.sessionStorage.getItem('user')),
-                typeList:[]
+                typeList:[],
+                showChangePwdModal: true,
+                changePwdForm: {
+                    oldPassword: '',
+                    newPassword: '',
+                    confirnPassword: ''
+                },
+                loading: false,
+                formLabelWidth: '80px',
+                changePwdRules: {
+                    oldPassword: [{required:true, message:'请输密码', trigger:'blur'}],
+                    newPassword: [{required:true, validator: validatePass, trigger:'blur'}],
+                    confirnPassword: [{required:true, validator: validateConfirmPass, trigger:'blur'}]
+                }
+                
+            }
+        },
+        watch: {
+            showChangePwdModal: function(newVal) {
+                this.$refs['changePwdForm'].resetFields();
             }
         }
     }
@@ -158,6 +262,14 @@
         float: right;
         margin-top: 15px;
     }
+   
+   .customWidth {
+       width: 40%;
+   }
 
+  .el-form-item >>> .el-input > input{
+    height: 50px;
+    font-size: 20px;
+  }
 
 </style>
