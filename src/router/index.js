@@ -17,6 +17,11 @@ const routes = [
     name: 'Login',
     component: Login
   },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
+  },
   //内部主页
   {
     path: '/home',
