@@ -68,8 +68,7 @@
                               window.sessionStorage.setItem('token', tokenStr); //存储token
                                this.$router.replace('/home');        
                            } else {
-                               this.updateCaptcha(); //如果返回的数据为空，说明登陆失败，刷新验证码  
-                               this.$message.error(resp.message)
+                               this.updateCaptcha(); //如果返回的数据为空，说明登陆失败，刷新验证码 
                             }
                             this.loading = false;
                         })
