@@ -29,11 +29,11 @@ axios.interceptors.response.use(success => { //成功调到后端接口
         if(success.data.code == 500 || success.data.code == 401 || success.data.code == 403) {  //服务器异常
             Message.error({message: success.data.message});
             return;
-        } else if (success.data.code == 98 || success.data.code == 21 || success.data == 97 || success.data.code == 200) {
-            return success.data;
-        } else  {  //如果密码错误
-            Message.error({message: success.data.message});
-            return ;
+        } else  { 
+            if (success.data.code != 200) {
+                Message.error({message: success.data.message});
+            }
+            return  success.data;
         }
     }   //返回数据
 }, error => { //没有调到后端接口
