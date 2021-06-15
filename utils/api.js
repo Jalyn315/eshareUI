@@ -29,8 +29,9 @@ axios.interceptors.response.use(success => { //成功调到后端接口
         if(success.data.code == 500 || success.data.code == 401 || success.data.code == 403) {  //服务器异常
             Message.error({message: success.data.message});
             return;
-        } else  { 
-            if (success.data.code != 200) {
+        } else  {    
+            if (success.data.code != 200 && success.data.message) {
+                console.log(success.data.message)
                 Message.error({message: success.data.message});
             }
             return  success.data;

@@ -13,7 +13,7 @@
                 <el-dropdown-menu slot="dropdown">
                     <el-dropdown-item command = "/user">个人中心</el-dropdown-item>
                     <el-dropdown-item command = "" @click.native="taggleModal">修改密码</el-dropdown-item>
-                    <el-dropdown-item command = "">注销登陆</el-dropdown-item>
+                    <el-dropdown-item command = "" @click.native="logout">注销登陆</el-dropdown-item>
                 </el-dropdown-menu>
                 </el-dropdown>
             </el-header>
@@ -148,6 +148,24 @@
                        })
                     }
                 })
+            },
+            //退出登陆
+            logout() {
+                this.getRequest('/logout').then(resp => {
+                    if (resp.code == 200) {
+                         this.$confirm('退出当前账号?', '提示', {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                            }).then(() => {
+                                window.sessionStorage.removeItem('token');
+                                window.sessionStorage.removeItem('user');
+                                this.$router.replace('/');
+                            }).catch(() => {
+                               return  
+                        });
+                    }
+                })
             }
            
         },
@@ -185,10 +203,10 @@
             };
             
             return{
-                curentPageUrl:'/user',
+                curentPageUrl:'/fileList',
                 user: JSON.parse(window.sessionStorage.getItem('user')),
                 typeList:[],
-                showChangePwdModal: true,
+                showChangePwdModal: false,
                 changePwdForm: {
                     oldPassword: '',
                     newPassword: '',
